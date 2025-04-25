@@ -9,6 +9,7 @@ import {
   Trash2,
   Users,
   Send,
+  Smartphone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -29,6 +30,7 @@ type CampaignCardProps = {
   onEdit: (campaign: Campaign) => void;
   onDelete: (id: number) => void;
   onResendSms: (id: number) => void;
+  onViewForm?: (campaign: Campaign) => void;
 };
 
 export default function CampaignCard({
@@ -36,6 +38,7 @@ export default function CampaignCard({
   onEdit,
   onDelete,
   onResendSms,
+  onViewForm,
 }: CampaignCardProps) {
   const { toast } = useToast();
 
@@ -148,6 +151,17 @@ export default function CampaignCard({
             <Send className="h-4 w-4 mr-1" />
             Resend SMS
           </Button>
+          {onViewForm && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="bg-purple-50 text-purple-600 border-purple-200 hover:bg-purple-100"
+              onClick={() => onViewForm(campaign)}
+            >
+              <Smartphone className="h-4 w-4 mr-1" />
+              Form Preview
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>

@@ -101,6 +101,16 @@ export class DatabaseStorage implements IStorage {
   }
   
   async createCampaign(insertCampaign: InsertCampaign): Promise<Campaign> {
+    // Make sure platforms is an array
+    if (typeof insertCampaign.platforms === 'object' && !Array.isArray(insertCampaign.platforms)) {
+      insertCampaign.platforms = Object.values(insertCampaign.platforms);
+    }
+    
+    // Ensure status is set
+    if (!insertCampaign.status) {
+      insertCampaign.status = 'active';
+    }
+    
     const [campaign] = await db.insert(campaigns).values(insertCampaign).returning();
     return campaign;
   }
