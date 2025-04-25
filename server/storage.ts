@@ -8,7 +8,10 @@ import {
 } from "@shared/schema";
 
 // Storage interface
+import session from "express-session";
+
 export interface IStorage {
+  sessionStore: session.Store;
   // Admin methods
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
@@ -46,7 +49,12 @@ export interface IStorage {
   createActivity(activity: InsertActivity): Promise<Activity>;
 }
 
+import createMemoryStore from "memorystore";
+const MemoryStore = createMemoryStore(session);
+
 export class MemStorage implements IStorage {
+  sessionStore: session.Store;
+  
   private users: Map<number, User>;
   private admins: Map<number, Admin>;
   private contacts: Map<number, Contact>;
@@ -62,6 +70,10 @@ export class MemStorage implements IStorage {
   private activityId: number;
 
   constructor() {
+    this.sessionStore = new MemoryStore({
+      checkPeriod: 86400000, // 24 hours
+    });
+    
     this.users = new Map();
     this.admins = new Map();
     this.contacts = new Map();
@@ -224,7 +236,11 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+import { DatabaseStorage } from "./database-storage";
+
+// Choose which storage implementation to use
+// export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
 
 // Initialize with default admin user
 (async () => {
