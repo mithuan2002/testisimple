@@ -1,8 +1,9 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import bcrypt from "bcrypt";
 import { format } from "date-fns";
+import session from "express-session";
 import { 
   insertCampaignSchema, 
   insertContactSchema,
@@ -11,7 +12,25 @@ import {
   loginSchema
 } from "@shared/schema";
 
+// Extend express-session with our custom properties
+declare module 'express-session' {
+  interface SessionData {
+    userId?: number;
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Set up session middleware
+  app.use(session({
+    secret: 'your-secret-key',
+    resave: false,
+    saveUninitialized: false,
+    store: storage.sessionStore,
+    cookie: {
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 24 * 60 * 60 * 1000 // 1 day
+    }
+  }));
   // Authentication routes
   app.post("/api/auth/login", async (req, res) => {
     try {
@@ -80,7 +99,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Auth middleware to protect routes
-  const isAuthenticated = (req, res, next) => {
+  const isAuthenticated = (req: Request, res: Response, next: NextFunction) => {
     if (req.session && req.session.userId) {
       return next();
     }
@@ -258,9 +277,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Log the activity
       const campaign = await storage.getCampaign(submission.campaignId);
+      const campaignTitle = campaign ? campaign.title : 'a campaign';
+      
       await storage.createActivity({
         type: "upload",
-        message: `<span class="font-medium">${submission.name}</span> submitted a new screenshot for <span class="font-medium">${campaign?.title || 'a campaign'}</span>`,
+        message: `<span class="font-medium">${submission.name}</span> submitted a new screenshot for <span class="font-medium">${campaignTitle}</span>`,
         timestamp: format(new Date(), "PPpp"),
       });
       
@@ -467,13 +488,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         campaign.count += 1;
         campaign.engagement += submission.engagementCount;
         
-        // Get campaign name
-        if (!campaign.name) {
-          const campaignObj = storage.getCampaign(submission.campaignId);
-          if (campaignObj) {
-            campaign.name = campaignObj.title;
-          }
-        }
+        // We'll set the campaign name later when we process top campaigns
       });
       
       // Convert to array and sort
