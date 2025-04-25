@@ -41,26 +41,45 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createCampaign(insertCampaign: InsertCampaign): Promise<Campaign> {
-    // Ensure platforms is an array
-    if (typeof insertCampaign.platforms === 'object' && !Array.isArray(insertCampaign.platforms)) {
-      insertCampaign.platforms = Object.values(insertCampaign.platforms);
+    try {
+      // Ensure platforms is an array
+      if (typeof insertCampaign.platforms === 'object' && !Array.isArray(insertCampaign.platforms)) {
+        insertCampaign.platforms = Object.values(insertCampaign.platforms);
+      }
+
+      // Set default status
+      if (!insertCampaign.status) {
+        insertCampaign.status = 'active';
+      }
+
+      // Create the campaign
+      const [campaign] = await this.db.insert(campaigns).values({
+        title: insertCampaign.title,
+        description: insertCampaign.description,
+        startDate: insertCampaign.startDate,
+        endDate: insertCampaign.endDate,
+        smsMessage: insertCampaign.smsMessage,
+        platforms: insertCampaign.platforms,
+        status: insertCampaign.status,
+        createdAt: new Date().toISOString()
+      }).returning();
+
+      if (!campaign) {
+        throw new Error('Failed to create campaign');
+      }
+
+      // Log activity
+      await this.createActivity({
+        type: "campaign",
+        message: `<span class="font-medium">New campaign created</span>: ${campaign.title}`,
+        timestamp: format(new Date(), "PPpp"),
+      });
+
+      return campaign;
+    } catch (error) {
+      console.error('Create campaign error:', error);
+      throw error;
     }
-
-    // Set default status
-    if (!insertCampaign.status) {
-      insertCampaign.status = 'active';
-    }
-
-    const [campaign] = await this.db.insert(campaigns).values(insertCampaign).returning();
-
-    // Log activity
-    await this.createActivity({
-      type: "campaign",
-      message: `<span class="font-medium">New campaign created</span>: ${campaign.title}`,
-      timestamp: format(new Date(), "PPpp"),
-    });
-
-    return campaign;
   }
 
   async updateCampaign(id: number, campaignUpdate: Partial<InsertCampaign>): Promise<Campaign> {
@@ -95,8 +114,7 @@ export class DatabaseStorage implements IStorage {
     return await this.db
       .select()
       .from(activities)
-      .orderBy(activities.id)
-      .desc()
+      .orderBy(desc(activities.id))
       .limit(limit);
   }
 
