@@ -41,6 +41,7 @@ export interface IStorage {
   getAllSubmissions(): Promise<Submission[]>;
   getSubmissionsByCampaign(campaignId: number): Promise<Submission[]>;
   createSubmission(submission: InsertSubmission): Promise<Submission>;
+  updateSubmission(id: number, submission: Partial<InsertSubmission>): Promise<Submission>;
   
   // Activity methods
   getActivity(id: number): Promise<Activity | undefined>;
@@ -204,9 +205,24 @@ export class MemStorage implements IStorage {
   
   async createSubmission(insertSubmission: InsertSubmission): Promise<Submission> {
     const id = this.submissionId++;
-    const submission: Submission = { ...insertSubmission, id };
+    const submission: Submission = { 
+      ...insertSubmission, 
+      id,
+      points: insertSubmission.points || 0 // Default points to 0 if not provided
+    };
     this.submissions.set(id, submission);
     return submission;
+  }
+  
+  async updateSubmission(id: number, submissionUpdate: Partial<InsertSubmission>): Promise<Submission> {
+    const submission = this.submissions.get(id);
+    if (!submission) {
+      throw new Error(`Submission with id ${id} not found`);
+    }
+    
+    const updatedSubmission = { ...submission, ...submissionUpdate };
+    this.submissions.set(id, updatedSubmission);
+    return updatedSubmission;
   }
   
   // Activity methods

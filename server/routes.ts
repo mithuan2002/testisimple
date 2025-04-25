@@ -739,6 +739,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Route to update submission points
+  app.patch("/api/submissions/:id/points", isAuthenticated, async (req, res) => {
+    try {
+      const submissionId = parseInt(req.params.id);
+      const { points } = req.body;
+
+      if (typeof points !== 'number' || isNaN(points) || points < 0) {
+        return res.status(400).json({ message: "Invalid points value" });
+      }
+
+      const submission = await storage.getSubmission(submissionId);
+      if (!submission) {
+        return res.status(404).json({ message: "Submission not found" });
+      }
+
+      const updatedSubmission = await storage.updateSubmission(submissionId, { points });
+      
+      // Create activity log for points assignment
+      await storage.createActivity({
+        type: "points",
+        message: `<span class="font-medium">${updatedSubmission.name}</span> was awarded <span class="font-medium">${points} points</span>`,
+        timestamp: new Date().toLocaleString(),
+      });
+
+      return res.status(200).json(updatedSubmission);
+    } catch (error) {
+      console.error("Update submission points error:", error);
+      return res.status(500).json({ message: "Failed to update submission points" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

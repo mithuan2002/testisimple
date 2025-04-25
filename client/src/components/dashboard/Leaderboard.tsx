@@ -58,10 +58,8 @@ export default function Leaderboard() {
             <CardTitle className="text-lg font-semibold text-slate-800">
               Top Promoters
             </CardTitle>
-            <Link href="/leaderboard">
-              <a className="text-sm text-blue-600 hover:text-blue-800 transition">
-                View All
-              </a>
+            <Link href="/leaderboard" className="text-sm text-blue-600 hover:text-blue-800 transition">
+              View All
             </Link>
           </div>
         </CardHeader>
@@ -94,10 +92,8 @@ export default function Leaderboard() {
           <CardTitle className="text-lg font-semibold text-slate-800">
             Top Promoters
           </CardTitle>
-          <Link href="/leaderboard">
-            <a className="text-sm text-blue-600 hover:text-blue-800 transition">
-              View All
-            </a>
+          <Link href="/leaderboard" className="text-sm text-blue-600 hover:text-blue-800 transition">
+            View All
           </Link>
         </div>
       </CardHeader>
