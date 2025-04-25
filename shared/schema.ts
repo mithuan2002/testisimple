@@ -75,6 +75,7 @@ export const submissions = pgTable("submissions", {
   platform: text("platform").notNull(),
   screenshotUrl: text("screenshot_url").notNull(),
   engagementCount: integer("engagement_count").notNull(),
+  points: integer("points").default(0).notNull(),
   submittedAt: text("submitted_at").notNull(),
 });
 
@@ -85,6 +86,7 @@ export const insertSubmissionSchema = createInsertSchema(submissions).pick({
   platform: true,
   screenshotUrl: true,
   engagementCount: true,
+  points: true,
   submittedAt: true,
 });
 

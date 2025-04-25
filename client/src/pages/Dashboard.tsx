@@ -152,6 +152,7 @@ export default function Dashboard() {
                   onEdit={handleEditCampaign}
                   onDelete={handleDeleteCampaign}
                   onResendSms={handleResendSms}
+                  onViewForm={handleViewCampaignForm}
                 />
               ))}
             </div>
