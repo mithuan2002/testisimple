@@ -68,6 +68,7 @@ export default function NewCampaignModal({
       const campaignData = {
         ...data,
         status: "active",
+        createdAt: new Date().toISOString(),
       };
       return apiRequest("POST", "/api/campaigns", campaignData);
     },
