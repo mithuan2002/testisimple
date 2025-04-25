@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Megaphone } from "lucide-react";
-import { format } from "date-fns";
 import {
   Dialog,
   DialogContent,
@@ -15,7 +14,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -25,27 +23,17 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { insertCampaignSchema } from "@shared/schema";
+import { format } from "date-fns";
 
-const campaignFormSchema = insertCampaignSchema.extend({
-  platformsArray: z.array(z.string()).min(1, {
-    message: "Select at least one platform",
-  }),
-  contactList: z.string().min(1, { 
-    message: "Select a contact list" 
-  }),
-  dateRange: z.string().min(1, {
-    message: "Date range is required",
-  }),
+const campaignFormSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  description: z.string().min(1, "Description is required"),
+  smsMessage: z.string().min(1, "SMS message is required").max(160, "SMS message must be less than 160 characters"),
+  platforms: z.array(z.string()).min(1, "Select at least one platform"),
+  startDate: z.string().min(1, "Start date is required"),
+  endDate: z.string().min(1, "End date is required"),
 });
 
 type CampaignFormValues = z.infer<typeof campaignFormSchema>;
@@ -68,31 +56,19 @@ export default function NewCampaignModal({
     defaultValues: {
       title: "",
       description: "",
-      dateRange: "",
       smsMessage: "",
-      platformsArray: [],
-      status: "active",
-      contactList: "",
+      platforms: [],
+      startDate: format(new Date(), "yyyy-MM-dd"),
+      endDate: format(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), "yyyy-MM-dd"),
     },
   });
 
   const createCampaign = useMutation({
     mutationFn: async (data: CampaignFormValues) => {
-      // Split the date range into start and end dates
-      const [startDate, endDate] = data.dateRange.split(" - ");
-
-      // Transform data for API
       const campaignData = {
-        title: data.title,
-        description: data.description,
-        startDate,
-        endDate,
-        smsMessage: data.smsMessage,
-        platforms: data.platformsArray,
-        status: data.status,
-        createdAt: format(new Date(), "yyyy-MM-dd'T'HH:mm:ss"),
+        ...data,
+        status: "active",
       };
-
       return apiRequest("POST", "/api/campaigns", campaignData);
     },
     onSuccess: () => {
@@ -100,7 +76,7 @@ export default function NewCampaignModal({
       queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
       toast({
         title: "Campaign created!",
-        description: "Your campaign has been created and SMS notifications sent.",
+        description: "Your campaign has been created and SMS notifications will be sent.",
       });
       form.reset();
       onClose();
@@ -118,22 +94,14 @@ export default function NewCampaignModal({
     createCampaign.mutate(data);
   };
 
-  const handleSmsChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setCharCount(e.target.value.length);
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <div className="sm:flex sm:items-start">
-            <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
-              <Megaphone className="h-6 w-6 text-blue-600" />
-            </div>
-            <DialogTitle className="ml-4 text-lg leading-6 font-medium text-slate-900">
-              Create New Campaign
-            </DialogTitle>
-          </div>
+          <DialogTitle className="flex items-center gap-2">
+            <Megaphone className="h-5 w-5" />
+            Create New Campaign
+          </DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
@@ -145,24 +113,7 @@ export default function NewCampaignModal({
                 <FormItem>
                   <FormLabel>Campaign Title</FormLabel>
                   <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="dateRange"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Campaign Duration</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="MM/DD/YYYY - MM/DD/YYYY"
-                    />
+                    <Input {...field} placeholder="Enter campaign title" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -174,17 +125,44 @@ export default function NewCampaignModal({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Campaign Description</FormLabel>
+                  <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Textarea
-                      {...field}
-                      rows={3}
-                    />
+                    <Textarea {...field} placeholder="Brief campaign description" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="startDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Start Date</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="endDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>End Date</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <FormField
               control={form.control}
@@ -193,82 +171,17 @@ export default function NewCampaignModal({
                 <FormItem>
                   <FormLabel>SMS Message</FormLabel>
                   <FormControl>
-                    <Textarea
-                      {...field}
-                      rows={2}
-                      placeholder="Message to send to contacts (160 chars max)"
+                    <Textarea 
+                      {...field} 
+                      placeholder="Message to send to contacts"
                       onChange={(e) => {
                         field.onChange(e);
-                        handleSmsChange(e);
+                        setCharCount(e.target.value.length);
                       }}
                     />
                   </FormControl>
-                  <p className="mt-1 text-xs text-slate-500">
-                    Characters: <span id="charCount">{charCount}</span>/160
-                  </p>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="platformsArray"
-              render={() => (
-                <FormItem>
-                  <FormLabel>Social Media Platforms</FormLabel>
-                  <div className="mt-2 space-y-2">
-                    <FormField
-                      control={form.control}
-                      name="platformsArray"
-                      render={({ field }) => (
-                        <FormItem className="flex items-center space-x-2">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value?.includes("instagram")}
-                              onCheckedChange={(checked) => {
-                                return checked
-                                  ? field.onChange([...field.value, "instagram"])
-                                  : field.onChange(
-                                      field.value?.filter(
-                                        (value) => value !== "instagram"
-                                      )
-                                    );
-                              }}
-                            />
-                          </FormControl>
-                          <FormLabel className="text-sm text-slate-700">
-                            Instagram
-                          </FormLabel>
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="platformsArray"
-                      render={({ field }) => (
-                        <FormItem className="flex items-center space-x-2">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value?.includes("snapchat")}
-                              onCheckedChange={(checked) => {
-                                return checked
-                                  ? field.onChange([...field.value, "snapchat"])
-                                  : field.onChange(
-                                      field.value?.filter(
-                                        (value) => value !== "snapchat"
-                                      )
-                                    );
-                              }}
-                            />
-                          </FormControl>
-                          <FormLabel className="text-sm text-slate-700">
-                            Snapchat
-                          </FormLabel>
-                        </FormItem>
-                      )}
-                    />
+                  <div className="text-xs text-gray-500">
+                    {charCount}/160 characters
                   </div>
                   <FormMessage />
                 </FormItem>
@@ -277,49 +190,55 @@ export default function NewCampaignModal({
 
             <FormField
               control={form.control}
-              name="contactList"
+              name="platforms"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Contact List</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select a contact list" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="all">All Contacts (2,540)</SelectItem>
-                      <SelectItem value="active">
-                        Active Customers (1,845)
-                      </SelectItem>
-                      <SelectItem value="recent">
-                        Recent Purchasers (980)
-                      </SelectItem>
-                      <SelectItem value="vip">VIP Members (350)</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormLabel>Social Media Platforms</FormLabel>
+                  <div className="flex gap-4">
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        checked={field.value?.includes("instagram")}
+                        onCheckedChange={(checked) => {
+                          const platforms = checked
+                            ? [...field.value, "instagram"]
+                            : field.value?.filter((p) => p !== "instagram");
+                          field.onChange(platforms);
+                        }}
+                      />
+                      <FormLabel className="text-sm">Instagram</FormLabel>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        checked={field.value?.includes("snapchat")}
+                        onCheckedChange={(checked) => {
+                          const platforms = checked
+                            ? [...field.value, "snapchat"]
+                            : field.value?.filter((p) => p !== "snapchat");
+                          field.onChange(platforms);
+                        }}
+                      />
+                      <FormLabel className="text-sm">Snapchat</FormLabel>
+                    </div>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <DialogFooter className="mt-6">
+            <DialogFooter>
               <Button
                 type="button"
                 variant="outline"
                 onClick={onClose}
-                className="ml-3"
               >
                 Cancel
               </Button>
               <Button 
-                type="submit" 
+                type="submit"
                 disabled={createCampaign.isPending}
               >
-                {createCampaign.isPending ? "Creating..." : "Create & Send"}
+                {createCampaign.isPending ? "Creating..." : "Create Campaign"}
               </Button>
             </DialogFooter>
           </form>
