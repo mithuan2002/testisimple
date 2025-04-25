@@ -229,6 +229,17 @@ export const storage = new MemStorage();
 // Initialize with default admin user
 (async () => {
   try {
+    // Create both user and admin with same credentials for convenience
+    const userExists = await storage.getUserByUsername("admin");
+    if (!userExists) {
+      await storage.createUser({
+        username: "admin",
+        password: "admin"
+      });
+      
+      console.log("Default user created: admin/admin");
+    }
+    
     const adminExists = await storage.getAdminByUsername("admin");
     if (!adminExists) {
       await storage.createAdmin({
