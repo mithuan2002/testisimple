@@ -312,6 +312,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Update submission points
+  app.patch("/api/submissions/:id/points", isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid submission ID" });
+      }
+      
+      const { engagementCount } = req.body;
+      if (typeof engagementCount !== 'number' || engagementCount < 0) {
+        return res.status(400).json({ message: "Invalid points value" });
+      }
+      
+      const submission = await storage.getSubmission(id);
+      if (!submission) {
+        return res.status(404).json({ message: "Submission not found" });
+      }
+      
+      // Update the submission points
+      const updatedSubmission = await storage.updateSubmission(id, { engagementCount });
+      
+      // Log the activity
+      await storage.createActivity({
+        type: "points",
+        message: `<span class="font-medium">${updatedSubmission.name}</span> was awarded <span class="font-medium">${engagementCount} points</span> for their submission`,
+        timestamp: format(new Date(), "PPpp"),
+      });
+      
+      return res.status(200).json(updatedSubmission);
+    } catch (error) {
+      console.error("Update submission points error:", error);
+      return res.status(500).json({ message: "Failed to update submission points" });
+    }
+  });
+  
   // Contact routes
   app.get("/api/contacts", isAuthenticated, async (req, res) => {
     try {
