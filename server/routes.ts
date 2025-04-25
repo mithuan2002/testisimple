@@ -172,17 +172,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create the campaign
       const campaign = await storage.createCampaign(validatedData);
       
-      // In a real app, this would trigger SMS to all contacts
-      // For this demo, we'll just log the activity
+      // Get all active contacts to send SMS
+      const contacts = await storage.getAllContacts();
+      const activeContacts = contacts.filter(contact => contact.isActive);
+      
+      // In a real app, this would trigger actual SMS sending
+      // For this demo, we'll log an activity with the actual count
       await storage.createActivity({
         type: "campaign",
         message: `<span class="font-medium">New campaign created</span>: ${campaign.title}`,
         timestamp: format(new Date(), "PPpp"),
       });
       
+      // Log SMS notification activity
       await storage.createActivity({
         type: "notification",
-        message: `SMS notifications sent to <span class="font-medium">2,540 contacts</span> for ${campaign.title}`,
+        message: `SMS notifications sent to <span class="font-medium">${activeContacts.length} contacts</span> for ${campaign.title}`,
         timestamp: format(new Date(), "PPpp"),
       });
       
@@ -233,11 +238,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Campaign not found" });
       }
       
+      // Get all active contacts to send SMS
+      const contacts = await storage.getAllContacts();
+      const activeContacts = contacts.filter(contact => contact.isActive);
+      
       // In a real app, this would resend SMS to all contacts
       // For this demo, we'll just log the activity
       await storage.createActivity({
         type: "notification",
-        message: `SMS notifications resent to <span class="font-medium">2,540 contacts</span> for ${campaign.title}`,
+        message: `SMS notifications resent to <span class="font-medium">${activeContacts.length} contacts</span> for ${campaign.title}`,
         timestamp: format(new Date(), "PPpp"),
       });
       
@@ -245,6 +254,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Resend SMS error:", error);
       return res.status(500).json({ message: "Failed to resend SMS" });
+    }
+  });
+  
+  // Route to get all submissions
+  app.get("/api/submissions", isAuthenticated, async (req, res) => {
+    try {
+      const submissions = await storage.getAllSubmissions();
+      return res.status(200).json(submissions);
+    } catch (error) {
+      console.error("Get submissions error:", error);
+      return res.status(500).json({ message: "Failed to fetch submissions" });
     }
   });
   
