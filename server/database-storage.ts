@@ -151,7 +151,27 @@ export class DatabaseStorage implements IStorage {
   }
   
   async createSubmission(insertSubmission: InsertSubmission): Promise<Submission> {
-    const [submission] = await db.insert(submissions).values(insertSubmission).returning();
+    // Ensure points is set to 0 if not provided
+    const submissionWithPoints = {
+      ...insertSubmission,
+      points: insertSubmission.points || 0
+    };
+    
+    const [submission] = await db.insert(submissions).values(submissionWithPoints).returning();
+    return submission;
+  }
+  
+  async updateSubmission(id: number, submissionUpdate: Partial<InsertSubmission>): Promise<Submission> {
+    const [submission] = await db
+      .update(submissions)
+      .set(submissionUpdate)
+      .where(eq(submissions.id, id))
+      .returning();
+    
+    if (!submission) {
+      throw new Error(`Submission with id ${id} not found`);
+    }
+    
     return submission;
   }
   
