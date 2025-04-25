@@ -16,33 +16,33 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  
+
   // Admin methods
   getAdmin(id: number): Promise<Admin | undefined>;
   getAdminByUsername(username: string): Promise<Admin | undefined>;
   createAdmin(admin: InsertAdmin): Promise<Admin>;
-  
+
   // Contact methods
   getContact(id: number): Promise<Contact | undefined>;
   getAllContacts(): Promise<Contact[]>;
   createContact(contact: InsertContact): Promise<Contact>;
   updateContact(id: number, contact: Partial<InsertContact>): Promise<Contact>;
   deleteContact(id: number): Promise<void>;
-  
+
   // Campaign methods
   getCampaign(id: number): Promise<Campaign | undefined>;
   getAllCampaigns(): Promise<Campaign[]>;
   createCampaign(campaign: InsertCampaign): Promise<Campaign>;
   updateCampaign(id: number, campaign: Partial<InsertCampaign>): Promise<Campaign>;
   deleteCampaign(id: number): Promise<void>;
-  
+
   // Submission methods
   getSubmission(id: number): Promise<Submission | undefined>;
   getAllSubmissions(): Promise<Submission[]>;
   getSubmissionsByCampaign(campaignId: number): Promise<Submission[]>;
   createSubmission(submission: InsertSubmission): Promise<Submission>;
   updateSubmission(id: number, submission: Partial<InsertSubmission>): Promise<Submission>;
-  
+
   // Activity methods
   getActivity(id: number): Promise<Activity | undefined>;
   getAllActivities(): Promise<Activity[]>;
@@ -55,14 +55,14 @@ const MemoryStore = createMemoryStore(session);
 
 export class MemStorage implements IStorage {
   sessionStore: session.Store;
-  
+
   private users: Map<number, User>;
   private admins: Map<number, Admin>;
   private contacts: Map<number, Contact>;
   private campaigns: Map<number, Campaign>;
   private submissions: Map<number, Submission>;
   private activities: Map<number, Activity>;
-  
+
   private userId: number;
   private adminId: number;
   private contactId: number;
@@ -74,14 +74,14 @@ export class MemStorage implements IStorage {
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000, // 24 hours
     });
-    
+
     this.users = new Map();
     this.admins = new Map();
     this.contacts = new Map();
     this.campaigns = new Map();
     this.submissions = new Map();
     this.activities = new Map();
-    
+
     this.userId = 1;
     this.adminId = 1;
     this.contactId = 1;
@@ -107,7 +107,7 @@ export class MemStorage implements IStorage {
     this.users.set(id, user);
     return user;
   }
-  
+
   // Admin methods
   async getAdmin(id: number): Promise<Admin | undefined> {
     return this.admins.get(id);
@@ -125,84 +125,85 @@ export class MemStorage implements IStorage {
     this.admins.set(id, admin);
     return admin;
   }
-  
+
   // Contact methods
   async getContact(id: number): Promise<Contact | undefined> {
     return this.contacts.get(id);
   }
-  
+
   async getAllContacts(): Promise<Contact[]> {
-    return Array.from(this.contacts.values());
+    //This needs a database connection to work properly.  This is a placeholder.
+    return await db.select().from(contacts); // Requires a database connection (db)
   }
-  
+
   async createContact(insertContact: InsertContact): Promise<Contact> {
     const id = this.contactId++;
     const contact: Contact = { ...insertContact, id };
     this.contacts.set(id, contact);
     return contact;
   }
-  
+
   async updateContact(id: number, contactUpdate: Partial<InsertContact>): Promise<Contact> {
     const contact = this.contacts.get(id);
     if (!contact) {
       throw new Error(`Contact with id ${id} not found`);
     }
-    
+
     const updatedContact = { ...contact, ...contactUpdate };
     this.contacts.set(id, updatedContact);
     return updatedContact;
   }
-  
+
   async deleteContact(id: number): Promise<void> {
     this.contacts.delete(id);
   }
-  
+
   // Campaign methods
   async getCampaign(id: number): Promise<Campaign | undefined> {
     return this.campaigns.get(id);
   }
-  
+
   async getAllCampaigns(): Promise<Campaign[]> {
     return Array.from(this.campaigns.values());
   }
-  
+
   async createCampaign(insertCampaign: InsertCampaign): Promise<Campaign> {
     const id = this.campaignId++;
     const campaign: Campaign = { ...insertCampaign, id };
     this.campaigns.set(id, campaign);
     return campaign;
   }
-  
+
   async updateCampaign(id: number, campaignUpdate: Partial<InsertCampaign>): Promise<Campaign> {
     const campaign = this.campaigns.get(id);
     if (!campaign) {
       throw new Error(`Campaign with id ${id} not found`);
     }
-    
+
     const updatedCampaign = { ...campaign, ...campaignUpdate };
     this.campaigns.set(id, updatedCampaign);
     return updatedCampaign;
   }
-  
+
   async deleteCampaign(id: number): Promise<void> {
     this.campaigns.delete(id);
   }
-  
+
   // Submission methods
   async getSubmission(id: number): Promise<Submission | undefined> {
     return this.submissions.get(id);
   }
-  
+
   async getAllSubmissions(): Promise<Submission[]> {
     return Array.from(this.submissions.values());
   }
-  
+
   async getSubmissionsByCampaign(campaignId: number): Promise<Submission[]> {
     return Array.from(this.submissions.values()).filter(
       (submission) => submission.campaignId === campaignId
     );
   }
-  
+
   async createSubmission(insertSubmission: InsertSubmission): Promise<Submission> {
     const id = this.submissionId++;
     const submission: Submission = { 
@@ -213,27 +214,27 @@ export class MemStorage implements IStorage {
     this.submissions.set(id, submission);
     return submission;
   }
-  
+
   async updateSubmission(id: number, submissionUpdate: Partial<InsertSubmission>): Promise<Submission> {
     const submission = this.submissions.get(id);
     if (!submission) {
       throw new Error(`Submission with id ${id} not found`);
     }
-    
+
     const updatedSubmission = { ...submission, ...submissionUpdate };
     this.submissions.set(id, updatedSubmission);
     return updatedSubmission;
   }
-  
+
   // Activity methods
   async getActivity(id: number): Promise<Activity | undefined> {
     return this.activities.get(id);
   }
-  
+
   async getAllActivities(): Promise<Activity[]> {
     return Array.from(this.activities.values());
   }
-  
+
   async getRecentActivities(limit: number): Promise<Activity[]> {
     return Array.from(this.activities.values())
       .sort((a, b) => {
@@ -243,7 +244,7 @@ export class MemStorage implements IStorage {
       })
       .slice(0, limit);
   }
-  
+
   async createActivity(insertActivity: InsertActivity): Promise<Activity> {
     const id = this.activityId++;
     const activity: Activity = { ...insertActivity, id };
@@ -268,17 +269,17 @@ export const storage = new DatabaseStorage();
         username: "admin",
         password: "admin"
       });
-      
+
       console.log("Default user created: admin/admin");
     }
-    
+
     const adminExists = await storage.getAdminByUsername("admin");
     if (!adminExists) {
       await storage.createAdmin({
         username: "admin",
         password: "admin"
       });
-      
+
       // Make a request to initialize demo data
       fetch("http://localhost:5000/api/init-demo-data", {
         method: "POST"

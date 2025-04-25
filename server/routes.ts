@@ -166,31 +166,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post("/api/campaigns", isAuthenticated, async (req, res) => {
     try {
-      // Validate request body
       const validatedData = insertCampaignSchema.parse(req.body);
       
-      // Create the campaign
-      const campaign = await storage.createCampaign(validatedData);
-      
-      // Get all active contacts to send SMS
+      // Create the campaign with proper data
+      const campaign = await storage.createCampaign({
+        ...validatedData,
+        status: 'active',
+        platforms: Array.isArray(validatedData.platforms) ? validatedData.platforms : [validatedData.platforms],
+      });
+
+      // Get actual active contacts count
       const contacts = await storage.getAllContacts();
       const activeContacts = contacts.filter(contact => contact.isActive);
-      
-      // In a real app, this would trigger actual SMS sending
-      // For this demo, we'll log an activity with the actual count
+
+      // Log campaign creation activity
       await storage.createActivity({
         type: "campaign",
         message: `<span class="font-medium">New campaign created</span>: ${campaign.title}`,
         timestamp: format(new Date(), "PPpp"),
       });
-      
-      // Log SMS notification activity
-      await storage.createActivity({
-        type: "notification",
-        message: `SMS notifications sent to <span class="font-medium">${activeContacts.length} contacts</span> for ${campaign.title}`,
-        timestamp: format(new Date(), "PPpp"),
-      });
-      
+
+      if (activeContacts.length > 0) {
+        // Log SMS notification activity with real count
+        await storage.createActivity({
+          type: "notification",
+          message: `SMS notifications sent to <span class="font-medium">${activeContacts.length} contacts</span> for ${campaign.title}`,
+          timestamp: format(new Date(), "PPpp"),
+        });
+      }
+
       return res.status(201).json(campaign);
     } catch (error) {
       console.error("Create campaign error:", error);
