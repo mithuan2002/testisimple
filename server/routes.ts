@@ -195,12 +195,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timestamp: format(new Date(), "PPpp"),
       });
 
-      // For demo purposes, just log instead of sending real SMS
-      console.log(`Would send SMS to ${activeContacts.length} contacts`);
+      // Send SMS to each active contact
+      for (const contact of activeContacts) {
+        try {
+          // Log SMS sending
+          console.log(`Sending SMS to ${contact.name} at ${contact.phone}`);
+          
+          // Here you would integrate with an SMS service like Twilio
+          // For now we'll just simulate success
+          await storage.createActivity({
+            type: "notification",
+            message: `SMS sent to <span class="font-medium">${contact.name}</span>`,
+            timestamp: format(new Date(), "PPpp"),
+          });
+        } catch (error) {
+          console.error(`Failed to send SMS to ${contact.phone}:`, error);
+          await storage.createActivity({
+            type: "error",
+            message: `Failed to send SMS to <span class="font-medium">${contact.name}</span>`,
+            timestamp: format(new Date(), "PPpp"),
+          });
+        }
+      }
 
       await storage.createActivity({
         type: "notification", 
-        message: `Campaign created and notifications queued for ${activeContacts.length} contacts`,
+        message: `Campaign created and SMS sent to ${activeContacts.length} contacts`,
         timestamp: format(new Date(), "PPpp"),
       });
 

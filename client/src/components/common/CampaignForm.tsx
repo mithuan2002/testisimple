@@ -49,7 +49,7 @@ export default function CampaignForm({ campaignId, title, description, platforms
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
       setFile(selectedFile);
-      
+
       // Create preview URL
       const reader = new FileReader();
       reader.onload = () => {
@@ -66,11 +66,11 @@ export default function CampaignForm({ campaignId, title, description, platforms
       formData.append("email", data.email);
       formData.append("platform", data.platform);
       formData.append("campaignId", campaignId.toString());
-      formData.append("engagementCount", data.engagementCount.toString());
+      formData.append("engagementCount", "0"); // Default engagement count
       if (file) {
         formData.append("screenshot", file);
       }
-      
+
       return apiRequest("POST", "/api/submissions", formData);
     },
     onSuccess: () => {
@@ -101,7 +101,7 @@ export default function CampaignForm({ campaignId, title, description, platforms
       });
       return;
     }
-    
+
     submitEntry.mutate(data);
   };
 
