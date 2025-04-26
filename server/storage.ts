@@ -56,12 +56,8 @@ const MemoryStore = createMemoryStore(session);
 export class MemStorage implements IStorage {
   sessionStore: session.Store;
 
-  private users: Map<number, User>;
-  private admins: Map<number, Admin>;
   private contacts: Map<number, Contact>;
   private campaigns: Map<number, Campaign>;
-  private submissions: Map<number, Submission>;
-  private activities: Map<number, Activity>;
 
   private userId: number;
   private adminId: number;
