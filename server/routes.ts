@@ -197,7 +197,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Initialize Twilio client
-      const twilio = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+      const { Twilio } = await import('twilio');
+      const twilio = new Twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
       // Send SMS to each active contact
       for (const contact of activeContacts) {
@@ -281,7 +282,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const contacts = await storage.getAllContacts();
       const activeContacts = contacts.filter(contact => contact.isActive);
 
-      const twilio = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+      const { Twilio } = await import('twilio');
+      const twilio = new Twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
       let successCount = 0;
 
       for (const contact of activeContacts) {
@@ -539,8 +541,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Contact not found" });
       }
 
-      const twilio = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-      
+      const { Twilio } = await import('twilio');
+      const twilio = new Twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+
       await twilio.messages.create({
         body: "This is a test SMS from your campaign management system",
         to: contact.phone,

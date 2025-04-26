@@ -227,7 +227,7 @@ export default function CampaignDetailPage({ id }: CampaignDetailPageProps) {
                   </h3>
                   <p className="text-slate-700">{campaign.description}</p>
                 </div>
-                
+
                 <div>
                   <h3 className="text-sm font-medium text-slate-500 mb-2">
                     SMS Message
@@ -262,7 +262,7 @@ export default function CampaignDetailPage({ id }: CampaignDetailPageProps) {
                         <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-500 mb-2">
                           <Users className="h-6 w-6" />
                         </div>
-                        <p className="text-2xl font-semibold text-slate-800">{contacts?.length || 0}</p>
+                        <p className="text-2xl font-semibold text-slate-800">{campaign.contacts?.length || 0}</p>
                         <p className="text-sm text-slate-500">Contacts Notified</p>
                       </div>
                     </CardContent>
@@ -273,7 +273,7 @@ export default function CampaignDetailPage({ id }: CampaignDetailPageProps) {
                         <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center text-green-500 mb-2">
                           <MessageSquare className="h-6 w-6" />
                         </div>
-                        <p className="text-2xl font-semibold text-slate-800">{submissions?.length || 0}</p>
+                        <p className="text-2xl font-semibold text-slate-800">{submissions?.filter(s => s.campaignId === campaign.id).length || 0}</p>
                         <p className="text-sm text-slate-500">Submissions</p>
                       </div>
                     </CardContent>
@@ -285,7 +285,7 @@ export default function CampaignDetailPage({ id }: CampaignDetailPageProps) {
                           <FileText className="h-6 w-6" />
                         </div>
                         <p className="text-2xl font-semibold text-slate-800">
-                          {submissions?.length || 0}
+                          {submissions?.filter(s => s.campaignId === campaign.id).length || 0}
                         </p>
                         <p className="text-sm text-slate-500">Form Submissions</p>
                       </div>
@@ -310,7 +310,7 @@ export default function CampaignDetailPage({ id }: CampaignDetailPageProps) {
                   <TabsTrigger value="instagram">Instagram</TabsTrigger>
                   <TabsTrigger value="snapchat">Snapchat</TabsTrigger>
                 </TabsList>
-                
+
                 <TabsContent value="all">
                   {isLoadingSubmissions ? (
                     <div className="animate-pulse space-y-2">
@@ -364,7 +364,7 @@ export default function CampaignDetailPage({ id }: CampaignDetailPageProps) {
                     </Table>
                   )}
                 </TabsContent>
-                
+
                 <TabsContent value="instagram">
                   {isLoadingSubmissions ? (
                     <div className="animate-pulse space-y-2">
@@ -405,7 +405,7 @@ export default function CampaignDetailPage({ id }: CampaignDetailPageProps) {
                     </Table>
                   )}
                 </TabsContent>
-                
+
                 <TabsContent value="snapchat">
                   {isLoadingSubmissions ? (
                     <div className="animate-pulse space-y-2">
