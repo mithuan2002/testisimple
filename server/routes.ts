@@ -195,14 +195,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timestamp: format(new Date(), "PPpp"),
       });
 
-      return res.status(201).json(updatedCampaign);
-        ...validatedData,
-        status: 'active',
-        platforms: Array.isArray(validatedData.platforms) ? validatedData.platforms : [validatedData.platforms],
-        formUrl: formUrl
-      });
+      // Send SMS notifications
+      const twilioClient = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+      
+      for (const contact of activeContacts) {
+        try {
+          await twilioClient.messages.create({
+            body: campaign.smsMessage,
+            to: contact.phone,
+            from: process.env.TWILIO_PHONE_NUMBER
+          });
+          
+          await storage.createActivity({
+            type: "notification",
+            message: `SMS sent to <span class="font-medium">${contact.name}</span>`,
+            timestamp: format(new Date(), "PPpp"),
+          });
+        } catch (error) {
+          console.error(`Failed to send SMS to ${contact.phone}:`, error);
+          await storage.createActivity({
+            type: "error",
+            message: `Failed to send SMS to <span class="font-medium">${contact.name}</span>`,
+            timestamp: format(new Date(), "PPpp"),
+          });
+        }
+      }
 
-      // Get actual active contacts and send SMS
+      return res.status(201).json(updatedCampaign);
       const contacts = await storage.getAllContacts();
       const activeContacts = contacts.filter(contact => contact.isActive);
 
