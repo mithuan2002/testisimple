@@ -168,11 +168,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = insertCampaignSchema.parse(req.body);
       
-      // Create the campaign with proper data
-      const baseUrl = process.env.BASE_URL || `http://localhost:5000`;
-      const formUrl = `${baseUrl}/campaign/${campaignId}`;
-
+      // First create the campaign to get the ID
       const campaign = await storage.createCampaign({
+        ...validatedData,
+        status: 'active',
+        platforms: Array.isArray(validatedData.platforms) ? validatedData.platforms : [validatedData.platforms],
+      });
+
+      // Then update it with the form URL
+      const baseUrl = process.env.BASE_URL || `http://localhost:5000`;
+      const formUrl = `${baseUrl}/campaign/${campaign.id}`;
+      
+      const updatedCampaign = await storage.updateCampaign(campaign.id, {
+        ...campaign,
+        formUrl
+      });
+
+      // Send notifications
+      const contacts = await storage.getAllContacts();
+      const activeContacts = contacts.filter(contact => contact.isActive);
+
+      // Create activity logs
+      await storage.createActivity({
+        type: "campaign",
+        message: `<span class="font-medium">New campaign created</span>: ${campaign.title}`,
+        timestamp: format(new Date(), "PPpp"),
+      });
+
+      return res.status(201).json(updatedCampaign);
         ...validatedData,
         status: 'active',
         platforms: Array.isArray(validatedData.platforms) ? validatedData.platforms : [validatedData.platforms],
