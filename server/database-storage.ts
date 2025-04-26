@@ -162,7 +162,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllContacts(): Promise<Contact[]> {
-    return await this.db.select().from(contacts);
+    try {
+      const result = await this.db.select().from(contacts);
+      return result || [];
+    } catch (error) {
+      console.error('Error fetching contacts:', error);
+      return [];
+    }
   }
 
   async createContact(insertContact: InsertContact): Promise<Contact> {

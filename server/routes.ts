@@ -169,15 +169,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertCampaignSchema.parse(req.body);
       
       // Create the campaign with proper data
+      const baseUrl = process.env.BASE_URL || `http://localhost:5000`;
+      const formUrl = `${baseUrl}/campaign/${campaignId}`;
+
       const campaign = await storage.createCampaign({
         ...validatedData,
         status: 'active',
         platforms: Array.isArray(validatedData.platforms) ? validatedData.platforms : [validatedData.platforms],
+        formUrl: formUrl
       });
 
-      // Get actual active contacts count
+      // Get actual active contacts and send SMS
       const contacts = await storage.getAllContacts();
       const activeContacts = contacts.filter(contact => contact.isActive);
+
+      // Send SMS to each active contact
+      for (const contact of activeContacts) {
+        try {
+          // Here you would integrate with an SMS service
+          console.log(`Sending SMS to ${contact.phone}: ${campaign.smsMessage}`);
+          // For now we'll just log it, but you would use something like Twilio here
+        } catch (error) {
+          console.error(`Failed to send SMS to ${contact.phone}:`, error);
+        }
+      }
 
       // Log campaign creation activity
       await storage.createActivity({
