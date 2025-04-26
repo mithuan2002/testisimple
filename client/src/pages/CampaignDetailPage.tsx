@@ -262,7 +262,7 @@ export default function CampaignDetailPage({ id }: CampaignDetailPageProps) {
                         <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-500 mb-2">
                           <Users className="h-6 w-6" />
                         </div>
-                        <p className="text-2xl font-semibold text-slate-800">2,540</p>
+                        <p className="text-2xl font-semibold text-slate-800">{contacts?.length || 0}</p>
                         <p className="text-sm text-slate-500">Contacts Notified</p>
                       </div>
                     </CardContent>
@@ -273,8 +273,8 @@ export default function CampaignDetailPage({ id }: CampaignDetailPageProps) {
                         <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center text-green-500 mb-2">
                           <MessageSquare className="h-6 w-6" />
                         </div>
-                        <p className="text-2xl font-semibold text-slate-800">98%</p>
-                        <p className="text-sm text-slate-500">Delivery Rate</p>
+                        <p className="text-2xl font-semibold text-slate-800">{submissions?.length || 0}</p>
+                        <p className="text-sm text-slate-500">Submissions</p>
                       </div>
                     </CardContent>
                   </Card>
