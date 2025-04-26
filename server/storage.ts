@@ -132,8 +132,7 @@ export class MemStorage implements IStorage {
   }
 
   async getAllContacts(): Promise<Contact[]> {
-    //This needs a database connection to work properly.  This is a placeholder.
-    return await db.select().from(contacts); // Requires a database connection (db)
+    return Array.from(this.contacts.values());
   }
 
   async createContact(insertContact: InsertContact): Promise<Contact> {
