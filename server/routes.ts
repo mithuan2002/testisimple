@@ -116,15 +116,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const totalContacts = contacts.length;
 
       // For a real app, these would be actual metrics
+      const submissions = await storage.getAllSubmissions();
       const statsData = {
         activeCampaigns,
         totalContacts,
-        messageDelivery: "98%",
-        formSubmissions: 648,
-        campaignIncrease: 12,
-        contactIncrease: 8,
-        deliveryIncrease: 2,
-        submissionIncrease: 15
+        messageDelivery: "0%",
+        formSubmissions: submissions.length,
+        campaignIncrease: 0,
+        contactIncrease: 0,
+        deliveryIncrease: 0,
+        submissionIncrease: 0
       };
 
       return res.status(200).json(statsData);
@@ -280,11 +281,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const contacts = await storage.getAllContacts();
       const activeContacts = contacts.filter(contact => contact.isActive);
 
-      // In a real app, this would resend SMS to all contacts
-      // For this demo, we'll just log the activity
+      const twilio = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+      let successCount = 0;
+
+      for (const contact of activeContacts) {
+        try {
+          await twilio.messages.create({
+            body: campaign.smsMessage,
+            to: contact.phone,
+            from: process.env.TWILIO_PHONE_NUMBER
+          });
+          successCount++;
+        } catch (error) {
+          console.error(`Failed to send SMS to ${contact.phone}:`, error);
+        }
+      }
+
       await storage.createActivity({
         type: "notification",
-        message: `SMS notifications resent to <span class="font-medium">${activeContacts.length} contacts</span> for ${campaign.title}`,
+        message: `SMS resent to <span class="font-medium">${successCount} contacts</span> for ${campaign.title}`,
         timestamp: format(new Date(), "PPpp"),
       });
 
@@ -524,8 +539,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Contact not found" });
       }
 
-      // In a real app, this would send a test SMS
-      // For this demo, we'll just log the activity
+      const twilio = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+      
+      await twilio.messages.create({
+        body: "This is a test SMS from your campaign management system",
+        to: contact.phone,
+        from: process.env.TWILIO_PHONE_NUMBER
+      });
+
       await storage.createActivity({
         type: "notification",
         message: `Test SMS sent to <span class="font-medium">${contact.name}</span> (${contact.phone})`,
