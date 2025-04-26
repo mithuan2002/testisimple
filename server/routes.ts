@@ -196,7 +196,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Send SMS notifications
-      const twilioClient = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+      import twilio from 'twilio';
+      const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
       
       for (const contact of activeContacts) {
         try {
