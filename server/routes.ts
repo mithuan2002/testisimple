@@ -195,16 +195,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timestamp: format(new Date(), "PPpp"),
       });
 
+      // Initialize Twilio client
+      const twilio = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+
       // Send SMS to each active contact
       for (const contact of activeContacts) {
         try {
-          // Log SMS sending
-          console.log(`Sending SMS to ${contact.name} at ${contact.phone}`);
-          
-          // Here you would integrate with an SMS service like Twilio
-          // For now we'll just simulate success
+          await twilio.messages.create({
+            body: campaign.smsMessage,
+            to: contact.phone,
+            from: process.env.TWILIO_PHONE_NUMBER
+          });
+
           await storage.createActivity({
-            type: "notification",
+            type: "notification", 
             message: `SMS sent to <span class="font-medium">${contact.name}</span>`,
             timestamp: format(new Date(), "PPpp"),
           });
@@ -212,7 +216,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error(`Failed to send SMS to ${contact.phone}:`, error);
           await storage.createActivity({
             type: "error",
-            message: `Failed to send SMS to <span class="font-medium">${contact.name}</span>`,
+            message: `Failed to send SMS to <span class="font-medium">${contact.name}</span>: ${error.message}`,
             timestamp: format(new Date(), "PPpp"),
           });
         }
