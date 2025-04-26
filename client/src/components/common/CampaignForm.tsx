@@ -61,29 +61,17 @@ export default function CampaignForm({ campaignId, title, description, platforms
 
   const submitEntry = useMutation({
     mutationFn: async (data: CampaignSubmissionValues) => {
-      // In a real app, we would upload the file to a server
-      // For this demo, we'll simulate the upload
-      
-      // Create a FormData object to send the file
       const formData = new FormData();
       formData.append("name", data.name);
       formData.append("email", data.email);
       formData.append("platform", data.platform);
       formData.append("campaignId", campaignId.toString());
-      formData.append("engagementCount", Math.floor(Math.random() * 500).toString());
+      formData.append("engagementCount", data.engagementCount.toString());
       if (file) {
         formData.append("screenshot", file);
       }
       
-      // Simulate file upload
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          resolve({
-            success: true,
-            id: Math.floor(Math.random() * 1000),
-          });
-        }, 1500);
-      });
+      return apiRequest("POST", "/api/submissions", formData);
     },
     onSuccess: () => {
       toast({
